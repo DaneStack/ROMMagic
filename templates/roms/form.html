@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card">
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
+    </div>
+    
+    <form id="rom-upload-form" method="POST" enctype="multipart/form-data" action="{{ url_for('roms.upload_multiple') }}">
+        <div class="form-group">
+            <label for="platform_id" class="form-label">Target Platform</label>
+            <select id="platform_id" name="platform_id" class="form-control" required>
+                <option value="">Select a platform</option>
+                {% for platform in platforms %}
+                <option value="{{ platform.id }}" data-extensions="{{ platform.allowed_extensions or '' }}">{{ platform.name }} ({{ platform.device.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">ROM Files</label>
+            <div class="file-upload-wrapper">
+                <input type="file" id="rom-file-input" name="files" required multiple>
+                <div class="file-upload-btn">
+                    <span id="file-upload-text">Click or drag files here to upload</span>
+                </div>
+            </div>
+            <span id="file-name-display"></span>
+        </div>
+
+        <div class="form-group hidden" id="progress-container">
+            <label class="form-label">Upload Progress</label>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progress-bar">0%</div>
+            </div>
+            <span id="upload-status-text">Uploading ROM files...</span>
+        </div>
+        
+        <div class="form-group" id="form-buttons">
+            <button type="submit" class="btn btn-primary" id="upload-submit-btn">Upload ROMs</button>
+            <a href="{{ url_for('roms.index') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+
+    <div class="upload-summary hidden" id="upload-summary">
+        <h2 class="upload-summary-title">Upload Complete</h2>
+        <div id="upload-summary-content"></div>
+        <div class="upload-summary-actions">
+            <a href="{{ url_for('roms.index') }}" class="btn btn-primary">Go to ROMs</a>
+            <button type="button" class="btn btn-outline" id="upload-another-btn">Upload More</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

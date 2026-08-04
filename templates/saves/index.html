@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Game Saves</h1>
+        <p class="page-subtitle" style="color: var(--text-muted, #a0aec0); margin-top: 0.25rem;">
+            Manage and sync native uncompressed save files and save folders across all your emulation platforms.
+        </p>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="toggle-upload-btn">+ Upload Save Files / Folders</button>
+    </div>
+</div>
+
+<!-- Merged Single Upload Box Card -->
+<div class="card" id="upload-save-card" style="margin-bottom: 2rem; display: none;">
+    <h2 class="card-title">Upload Game Saves (Files or Folders)</h2>
+    <div class="card-content">
+        <form action="{{ url_for('saves.upload') }}" method="POST" enctype="multipart/form-data" id="saves-upload-form">
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="upload_platform_id" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Target Platform</label>
+                <select name="platform_id" id="upload_platform_id" class="form-control" required style="width: 100%; padding: 0.6rem; border-radius: 6px; background: var(--bg-surface-secondary, #1a202c); color: var(--text-primary, #fff); border: 1px solid var(--border-color, #2d3748);">
+                    <option value="">-- Select Platform --</option>
+                    {% for platform in platforms %}
+                    <option value="{{ platform.id }}" {% if selected_platform_id == platform.id %}selected{% endif %}>
+                        {{ platform.name }} ({{ platform.device.name }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Unified Drag & Dropzone + Inputs -->
+            <div id="saves-dropzone" style="border: 2px dashed var(--primary-color, #38bdf8); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; background: rgba(56, 189, 248, 0.04); transition: all 0.2s ease; cursor: pointer; position: relative;">
+                <svg style="width: 48px; height: 48px; color: var(--primary-color, #38bdf8); margin-bottom: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <div style="font-weight: 600; font-size: 1.1rem; color: #f1f5f9; margin-bottom: 0.35rem;">
+                    Drag & Drop save files or save folders anywhere here
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">
+                    Supports native save files (<code>.sav</code>, <code>.card</code>, <code>.ps2</code>, <code>.srm</code>) & save folders (PPSSPP <code>ULUS10563</code>).
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                    <label class="btn btn-primary btn-sm" style="cursor: pointer; margin: 0; padding: 0.5rem 1rem;">
+                        <span>Choose Save File(s)</span>
+                        <input type="file" name="save_files" id="save_files" multiple style="display: none;">
+                    </label>
+                    <label class="btn btn-outline btn-sm" style="cursor: pointer; margin: 0; padding: 0.5rem 1rem;">
+                        <span>Choose Save Folder</span>
+                        <input type="file" name="save_folder_files" id="save_folder_files" webkitdirectory directory multiple style="display: none;">
+                    </label>
+                </div>
+
+                <div id="save-file-preview" style="margin-top: 1rem; font-size: 0.9rem; color: #38bdf8; font-weight: 600; display: none; background: rgba(15, 23, 42, 0.6); padding: 0.6rem; border-radius: 6px; word-break: break-all;"></div>
+            </div>
+            
+            <div class="form-actions" style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+                <button type="button" class="btn btn-outline" id="cancel-upload-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="save-upload-submit-btn">Upload Saves</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filters-container" style="background: var(--bg-surface, #1e293b); padding: 1.25rem; border-radius: 10px; margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; border: 1px solid var(--border-color, #334155);">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="filter_device" style="font-weight: 600; font-size: 0.9rem;">Device:</label>
+            <select id="filter_device" class="form-control" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: var(--bg-surface-secondary, #0f172a); color: #fff; border: 1px solid #334155;">
+                <option value="">All Devices</option>
+                {% for device in devices %}
+                <option value="{{ device.id }}" {% if selected_device_id == device.id %}selected{% endif %}>{{ device.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="filter_platform" style="font-weight: 600; font-size: 0.9rem;">Platform:</label>
+            <select id="filter_platform" class="form-control" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: var(--bg-surface-secondary, #0f172a); color: #fff; border: 1px solid #334155;">
+                <option value="">All Platforms</option>
+                {% for platform in platforms %}
+                <option value="{{ platform.id }}" data-device="{{ platform.device_id }}" {% if selected_platform_id == platform.id %}selected{% endif %}>{{ platform.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        {% if selected_device_id or selected_platform_id %}
+        <a href="{{ url_for('saves.index') }}" class="btn btn-outline btn-sm" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">Clear Filters</a>
+        {% endif %}
+    </div>
+
+    <div style="font-size: 0.9rem; color: var(--text-muted, #94a3b8);">
+        Total Save Items: <strong style="color: var(--primary-color, #38bdf8);">{{ total_saves_count }}</strong>
+    </div>
+</div>
+
+<!-- Batch Operations Bar -->
+<div id="saves-batch-bar" class="batch-actions-bar" style="background: rgba(30, 41, 59, 0.9); padding: 0.9rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; border: 1px solid var(--primary-color, #38bdf8);">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <input type="checkbox" id="saves-select-all" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="saves-select-all" style="font-weight: 600; cursor: pointer; user-select: none;">Select All Saves</label>
+        <span id="saves-selected-count" style="font-size: 0.85rem; color: var(--text-muted, #94a3b8); margin-left: 0.5rem;">(0 selected)</span>
+    </div>
+    
+    <div style="display: flex; gap: 0.75rem;">
+        <form action="{{ url_for('saves.batch_download') }}" method="POST" id="saves-batch-download-form" style="display: inline;">
+            <div id="batch-download-inputs"></div>
+            <button type="submit" class="btn btn-outline btn-sm" id="batch-download-btn" disabled>Download Selected (ZIP)</button>
+        </form>
+
+        <form action="{{ url_for('saves.batch_delete') }}" method="POST" id="saves-batch-delete-form" style="display: inline;">
+            <div id="batch-delete-inputs"></div>
+            <button type="submit" class="btn btn-danger btn-sm" id="batch-delete-btn" disabled onclick="return confirm('Are you sure you want to delete all selected game save items? This action cannot be undone.');">Delete Selected</button>
+        </form>
+    </div>
+</div>
+
+<!-- Save Files / Folders Grouped by Platform -->
+{% if saves_by_platform %}
+    {% for group in saves_by_platform %}
+        {% set platform = group.platform %}
+        {% set saves = group.saves %}
+        
+        <div class="platform-saves-section" style="margin-bottom: 2.5rem; background: var(--bg-surface, #1e293b); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color, #334155);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid #334155; padding-bottom: 0.75rem;">
+                <div>
+                    <h2 style="font-size: 1.35rem; font-weight: 700; margin: 0; color: #f8fafc; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #38bdf8;"></span>
+                        {{ platform.name }}
+                        <span style="font-size: 0.85rem; font-weight: 400; color: #94a3b8; margin-left: 0.5rem;">({{ platform.device.name }})</span>
+                    </h2>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span style="font-size: 0.85rem; color: #94a3b8; margin-right: 0.5rem;">{{ saves|length }} save item(s)</span>
+                    {% if saves %}
+                    <a href="{{ url_for('saves.download_all', platform_id=platform.id) }}" class="btn btn-outline btn-sm" style="font-size: 0.85rem;">
+                        Download Platform Saves (ZIP)
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if saves %}
+                <div class="saves-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                    {% for save in saves %}
+                    <div class="save-card" style="background: var(--bg-surface-secondary, #0f172a); border-radius: 8px; padding: 1rem; border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s ease, border-color 0.2s ease;">
+                        <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <input type="checkbox" class="save-checkbox" value="{{ platform.id }}:{{ save.filename }}" style="margin-top: 0.25rem; width: 16px; height: 16px; cursor: pointer;">
+                            
+                            <div style="flex: 1; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                    {% if save.is_directory %}
+                                    <span class="save-badge" style="background: #eab308; color: #0f172a; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 4px;">
+                                        FOLDER ({{ save.file_count }} files)
+                                    </span>
+                                    {% else %}
+                                    <span class="save-badge" style="background: #0284c7; color: #fff; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 4px;">
+                                        .{{ save.extension }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.95rem; color: #f1f5f9; word-break: break-all; line-height: 1.3;" title="{{ save.filename }}">
+                                    {{ save.filename }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; border-top: 1px dashed #334155; padding-top: 0.5rem;">
+                            <span>Size: <strong style="color: #cbd5e1;">{{ save.size_human }}</strong></span>
+                            <span>Modified: {{ save.modified_at }}</span>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: auto;">
+                            <a href="{{ url_for('saves.download', platform_id=platform.id, filename=save.filename) }}" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                Download {% if save.is_directory %}(ZIP){% endif %}
+                            </a>
+                            <form action="{{ url_for('saves.delete', platform_id=platform.id, filename=save.filename) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this save item?');">
+                                <button type="submit" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.95rem;">
+                    No save items stored for this platform yet. Click "Upload Save Files / Folders" above to add save items.
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <p style="font-size: 1.1rem; color: #94a3b8;">No emulation platforms found. Please add a platform first.</p>
+        <a href="{{ url_for('platforms.add') }}" class="btn btn-primary" style="margin-top: 1rem;">Add Platform</a>
+    </div>
+{% endif %}
+
+{% endblock %}

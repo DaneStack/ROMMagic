@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROM Magic</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <!-- Modern Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Separate CSS file, no inline styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('main.index') }}" class="brand">
+            <img src="{{ url_for('static', filename='images/logo-icon.svg') }}" alt="ROM Magic Icon" class="brand-icon">
+            <img src="{{ url_for('static', filename='images/logo-text.svg') }}" alt="ROMMAGIC" class="brand-text-svg">
+        </a>
+        {% if current_user.is_authenticated %}
+        <button class="hamburger-toggle" id="hamburger-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger-bar"></span>
+            <span class="hamburger-bar"></span>
+            <span class="hamburger-bar"></span>
+        </button>
+        <nav id="main-nav">
+            <a href="{{ url_for('main.index') }}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('devices.index') }}" class="{% if request.endpoint and request.endpoint.startswith('devices') %}active{% endif %}">Devices</a>
+            <a href="{{ url_for('platforms.index') }}" class="{% if request.endpoint and request.endpoint.startswith('platforms') %}active{% endif %}">Platforms</a>
+            <a href="{{ url_for('roms.index') }}" class="{% if request.endpoint and request.endpoint.startswith('roms') %}active{% endif %}">ROMs</a>
+            <a href="{{ url_for('saves.index') }}" class="{% if request.endpoint and request.endpoint.startswith('saves') %}active{% endif %}">Game Saves</a>
+            <a href="{{ url_for('auth.settings') }}" class="{% if request.endpoint == 'auth.settings' %}active{% endif %}">Settings</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </nav>
+        {% endif %}
+    </header>
+
+    <main>
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Separate JS file, no inline scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

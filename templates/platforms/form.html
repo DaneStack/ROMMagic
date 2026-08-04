@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card">
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
+    </div>
+    
+    <form method="POST">
+        {% if platform %}
+        {# Edit mode: platform name is fixed (read-only) #}
+        <div class="form-group">
+            <label class="form-label">Platform</label>
+            <input type="text" class="form-control" value="{{ platform.name }}" disabled>
+        </div>
+        {% else %}
+        {# Add mode: dropdown of available predefined platforms #}
+        <div class="form-group">
+            <label for="name" class="form-label">Platform</label>
+            <select id="name" name="name" class="form-control" required>
+                <option value="">Select a platform</option>
+                {% for pname in available_platforms %}
+                <option value="{{ pname }}" data-extensions="{{ predefined_extensions[pname] }}">{{ pname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+            <label for="device_id" class="form-label">Linked Device</label>
+            <select id="device_id" name="device_id" class="form-control" required>
+                <option value="">Select a device</option>
+                {% for device in devices %}
+                <option value="{{ device.id }}" {% if platform and platform.device_id == device.id %}selected{% endif %}>{{ device.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="folder_name" class="form-label">Folder Name (optional)</label>
+            <input type="text" id="folder_name" name="folder_name" class="form-control" value="{{ platform.folder_name if platform and platform.folder_name else '' }}" placeholder="Leave blank to use the default platform name">
+            <small class="form-help">Custom directory name where ROMs for this platform will be stored.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="allowed_extensions" class="form-label">Allowed Extensions (comma-separated, e.g. zip, nes, bin)</label>
+            <input type="text" id="allowed_extensions" name="allowed_extensions" class="form-control" value="{{ platform.allowed_extensions if platform and platform.allowed_extensions else '' }}" placeholder="Leave blank to allow any extension">
+        </div>
+        
+        <div class="form-group">
+            <label for="scraper" class="form-label">Scraper Provider</label>
+            <select id="scraper" name="scraper" class="form-control" required>
+                <option value="thegamesdb" {% if not platform or platform.scraper == 'thegamesdb' %}selected{% endif %}>TheGamesDB</option>
+                <option value="screenscraper" {% if platform and platform.scraper == 'screenscraper' %}selected{% endif %}>ScreenScraper</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save Platform</button>
+            <a href="{{ url_for('platforms.index') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% if not platform %}
+<script>
+    // Auto-fill allowed extensions when a predefined platform is selected
+    document.getElementById('name').addEventListener('change', function() {
+        var selected = this.options[this.selectedIndex];
+        var extensions = selected.getAttribute('data-extensions') || '';
+        document.getElementById('allowed_extensions').value = extensions;
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">ROMs</h1>
+    <div class="header-actions">
+        <form action="{{ url_for('roms.scan') }}" method="POST">
+            <button type="submit" class="btn btn-outline">Scan ROMs Folder</button>
+        </form>
+        <a href="{{ url_for('roms.upload') }}" class="btn btn-primary">Upload ROM</a>
+    </div>
+</div>
+
+{% if roms %}
+<div class="batch-actions-header">
+    <button type="button" class="btn btn-outline btn-sm" id="select-all-btn">Select All Visible</button>
+</div>
+<div class="filter-bar">
+    <div class="filter-row">
+        <div class="filter-label">Filter by Device:</div>
+        <div class="filter-tabs" id="device-filter-tabs">
+            <button type="button" class="filter-tab active" data-device-id="all">
+                All <span class="badge">{{ roms|length }}</span>
+            </button>
+            {% for device in devices %}
+                {% set device_rom_count = [] %}
+                {% for platform in device.platforms.all() %}
+                    {% for _ in range(platform.roms.count()) %}
+                        {% if device_rom_count.append(1) %}{% endif %}
+                    {% endfor %}
+                {% endfor %}
+                {% if device_rom_count|length > 0 %}
+                <button type="button" class="filter-tab" data-device-id="{{ device.id }}">
+                    {{ device.name }} <span class="badge">{{ device_rom_count|length }}</span>
+                </button>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="filter-row">
+        <div class="filter-label">Filter by Platform:</div>
+        <div class="filter-tabs" id="platform-filter-tabs">
+            <button type="button" class="filter-tab active" data-platform-id="all">
+                All <span class="badge" id="platform-all-badge">{{ roms|length }}</span>
+            </button>
+            {% for platform in platforms %}
+                {% if platform.roms.count() > 0 %}
+                <button type="button" class="filter-tab" data-platform-id="{{ platform.id }}" data-device-id="{{ platform.device_id }}">
+                    {{ platform.name }} <span class="badge">{{ platform.roms.count() }}</span>
+                </button>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card-grid">
+    {% for rom in roms %}
+    <div class="card rom-card"
+         data-download-url="{{ url_for('roms.download', id=rom.id) }}"
+         data-platform-id="{{ rom.platform_id }}"
+         data-device-id="{{ rom.platform.device_id if rom.platform else '' }}"
+         data-rom-id="{{ rom.id }}"
+         data-rom-title="{{ (rom.game_title if rom.game_title else rom.filename)|forceescape }}"
+         data-rom-filename="{{ rom.filename|forceescape }}"
+         data-rom-platform="{{ (rom.platform.name if rom.platform else '')|forceescape }}"
+         data-rom-cover="{{ (rom.cover_image_url if rom.cover_image_url else '')|forceescape }}"
+         data-rom-esrb="{{ (rom.esrb_rating if rom.esrb_rating else '')|forceescape }}"
+         data-rom-genres="{{ (rom.genres if rom.genres else '')|forceescape }}"
+         data-rom-description="{{ ((rom.description|replace('\n', '<br>')|replace('\r', '')) if rom.description else '')|forceescape }}"
+         data-rom-rescan-url="{{ url_for('roms.rescan_individual', id=rom.id) }}"
+         data-rom-delete-url="{{ url_for('roms.delete', id=rom.id) }}"
+         data-rom-keywords="{{ (rom.search_keywords if rom.search_keywords else '')|forceescape }}"
+         data-rom-edit-keywords-url="{{ url_for('roms.edit_keywords', id=rom.id) }}">
+
+        <div class="card-select-checkbox">
+            <input type="checkbox" class="rom-select-cb" value="{{ rom.id }}" aria-label="Select {{ (rom.game_title if rom.game_title else rom.filename)|forceescape }}">
+        </div>
+
+        <!-- Cover Art -->
+        <div class="rom-card-cover">
+            {% if rom.cover_image_url %}
+            <img src="{{ rom.cover_image_url }}" alt="{{ (rom.game_title or rom.filename)|forceescape }} cover art" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+            <div class="cover-placeholder hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 12h.01M18 12h.01M9 18h6M7.5 21h9a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3h-9a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3Z"/>
+                    <circle cx="6" cy="12" r="0.5" fill="currentColor"/>
+                    <circle cx="18" cy="12" r="0.5" fill="currentColor"/>
+                    <path d="M9 9h.01M15 9h.01"/>
+                </svg>
+            </div>
+            {% else %}
+            <div class="cover-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 12h.01M18 12h.01M9 18h6M7.5 21h9a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3h-9a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3Z"/>
+                    <circle cx="6" cy="12" r="0.5" fill="currentColor"/>
+                    <circle cx="18" cy="12" r="0.5" fill="currentColor"/>
+                    <path d="M9 9h.01M15 9h.01"/>
+                </svg>
+            </div>
+            {% endif %}
+        </div>
+
+        <h2 class="card-title">
+            {% set title = (rom.game_title if rom.game_title else rom.filename) or '' %}
+            {% if title and ':' in title %}
+                {% set parts = title.split(':', 1) %}
+                {{ parts[0]|trim }}:<br>{{ parts[1]|trim }}
+            {% else %}
+                {{ title }}
+            {% endif %}
+        </h2>
+        <div class="card-content">
+            <p>Platform: {{ rom.platform.name if rom.platform else 'Unknown' }}</p>
+            {% if rom.game_title %}
+            <p class="filename-subtext">File: {{ rom.filename }}</p>
+            {% endif %}
+
+            <!-- Genre & ESRB Badges -->
+            {% if rom.genres or rom.esrb_rating %}
+            <div class="card-meta-badges">
+                {% if rom.esrb_rating %}
+                <span class="esrb-badge" data-rating="{{ rom.esrb_rating }}">{{ rom.esrb_rating }}</span>
+                {% endif %}
+                {% if rom.genres %}
+                    {% for genre in rom.genres.split(', ') %}
+                    <span class="genre-badge">{{ genre }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Keywords Section -->
+            <div class="keywords-container" id="keywords-container-{{ rom.id }}">
+                <span class="keywords-label">Keywords:</span>
+                <span class="keywords-value">{{ rom.search_keywords if rom.search_keywords else 'None' }}</span>
+                <button type="button" class="btn-icon edit-keywords-btn" data-rom-id="{{ rom.id }}">Edit</button>
+            </div>
+            
+            <!-- Hidden Edit Form -->
+            <form id="edit-keywords-form-{{ rom.id }}" action="{{ url_for('roms.edit_keywords', id=rom.id) }}" method="POST" class="edit-keywords-form hidden">
+                <input type="text" name="search_keywords" class="form-control keywords-input" value="{{ rom.search_keywords if rom.search_keywords else '' }}" placeholder="Search keywords...">
+                <div class="edit-form-actions">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="button" class="btn btn-outline btn-sm cancel-keywords-btn" data-rom-id="{{ rom.id }}">Cancel</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-actions">
+            <button type="button" class="btn btn-primary details-btn">Details</button>
+            <a href="{{ url_for('roms.download', id=rom.id) }}" class="btn btn-outline">Download</a>
+            <form action="{{ url_for('roms.rescan_individual', id=rom.id) }}" method="POST">
+                <button type="submit" class="btn btn-outline">Rescan</button>
+            </form>
+            <form action="{{ url_for('roms.delete', id=rom.id) }}" method="POST" class="delete-form">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="no-roms-filtered" class="card hidden">
+    <div class="card-content">
+        <p>No ROMs found matching the selected filters.</p>
+        <button type="button" class="btn btn-outline btn-sm" id="reset-filters-btn" style="margin-top: 0.5rem;">Reset Filters</button>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="details-modal-overlay hidden" id="details-modal-overlay">
+    <div class="details-modal" id="details-modal">
+        <button type="button" class="details-modal-close" id="details-modal-close" aria-label="Close details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="details-modal-cover" id="modal-cover">
+            <img id="modal-cover-img" src="" alt="Cover art">
+            <div class="cover-placeholder hidden" id="modal-cover-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 12h.01M18 12h.01M9 18h6M7.5 21h9a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3h-9a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3Z"/>
+                    <circle cx="6" cy="12" r="0.5" fill="currentColor"/>
+                    <circle cx="18" cy="12" r="0.5" fill="currentColor"/>
+                    <path d="M9 9h.01M15 9h.01"/>
+                </svg>
+            </div>
+        </div>
+        <div class="details-modal-body">
+            <h2 class="details-modal-title" id="modal-title"></h2>
+            <p class="details-modal-platform" id="modal-platform"></p>
+            <p class="details-modal-filename" id="modal-filename"></p>
+            <div class="details-modal-badges" id="modal-badges"></div>
+            <div class="details-modal-description" id="modal-description"></div>
+            <div class="details-modal-actions" id="modal-actions"></div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-content">No ROMs found. Get started by uploading a new ROM!</div>
+</div>
+{% endif %}
+
+<!-- Batch Actions Bar -->
+<div id="batch-action-bar" class="batch-action-bar hidden">
+    <div class="batch-action-content">
+        <span id="batch-selected-count">0 selected</span>
+        <div class="batch-action-buttons">
+            <button type="button" class="btn btn-primary" id="batch-download-btn">Download Selected</button>
+            <button type="button" class="btn btn-outline" id="batch-rescrape-btn">Rescrape Selected</button>
+            <button type="button" class="btn btn-danger" id="batch-delete-btn">Delete Selected</button>
+            <button type="button" class="btn btn-outline" id="batch-cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for batch download -->
+<form id="batch-download-form" action="{{ url_for('roms.batch_download') }}" method="POST" class="hidden">
+</form>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+</div>
+
+<div class="card-grid">
+    <a href="{{ url_for('devices.index') }}" class="card stat-card interactive-card">
+        <div class="stat-value">{{ devices_count }}</div>
+        <div class="stat-label">Devices</div>
+        <div class="card-actions">
+            <span class="btn btn-outline">Manage Devices</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('platforms.index') }}" class="card stat-card interactive-card">
+        <div class="stat-value">{{ platforms_count }}</div>
+        <div class="stat-label">Platforms</div>
+        <div class="card-actions">
+            <span class="btn btn-outline">Manage Platforms</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('roms.index') }}" class="card stat-card interactive-card">
+        <div class="stat-value">{{ roms_count }}</div>
+        <div class="stat-label">ROMs</div>
+        <div class="card-actions">
+            <span class="btn btn-outline">Manage ROMs</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('saves.index') }}" class="card stat-card interactive-card">
+        <div class="stat-value">{{ saves_count }}</div>
+        <div class="stat-label">Game Saves</div>
+        <div class="card-actions">
+            <span class="btn btn-outline">Manage Saves</span>
+        </div>
+    </a>
+</div>
+{% endblock %}

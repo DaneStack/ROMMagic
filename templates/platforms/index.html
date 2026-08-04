@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Platforms</h1>
+    {% if available_platforms %}
+    <a href="{{ url_for('platforms.add') }}" class="btn btn-primary">Add New Platform</a>
+    {% endif %}
+</div>
+
+{% if platforms %}
+<div class="card-grid">
+    {% for platform in platforms %}
+    <div class="card">
+        <h2 class="card-title">{{ platform.name }}</h2>
+        <div class="card-content">
+            <p>Device: {{ platform.device.name }}</p>
+            <p>ROMs: {{ platform.roms.count() }}</p>
+            <p>Allowed Extensions: {{ platform.allowed_extensions if platform.allowed_extensions else 'Any' }}</p>
+            <p>Scraper: {% if platform.scraper == 'screenscraper' %}ScreenScraper{% else %}TheGamesDB{% endif %}</p>
+        </div>
+        <div class="card-actions">
+            <a href="{{ url_for('platforms.download_metadata', id=platform.id) }}" class="btn btn-outline" title="Download Images & Metadata">Download Data</a>
+            <a href="#" class="btn btn-outline download-roms-btn" data-url="{{ url_for('platforms.download_roms', id=platform.id) }}" title="Download All ROMs">Download ROMs</a>
+            <a href="{{ url_for('saves.index', platform_id=platform.id) }}" class="btn btn-outline" title="Manage Game Saves">Game Saves</a>
+            <form action="{{ url_for('platforms.clear_cache', id=platform.id) }}" method="POST" style="display: inline-block;">
+                <button type="submit" class="btn btn-outline" title="Clear Cached ROMs ZIP">Clear Cache</button>
+            </form>
+            <a href="{{ url_for('platforms.edit', id=platform.id) }}" class="btn btn-outline">Edit</a>
+            <form action="{{ url_for('platforms.delete', id=platform.id) }}" method="POST" class="delete-form">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-content">No platforms found. Get started by adding a new platform!</div>
+</div>
+{% endif %}
+
+<!-- Compression Progress Modal -->
+<div id="compression-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Compressing ROMs...</h2>
+        <p id="compression-status-text">Preparing files for download...</p>
+        <div class="progress-container" style="margin-top: 1rem; background-color: #e0e0e0; border-radius: 4px; overflow: hidden; height: 20px;">
+            <div id="compression-progress-bar" style="width: 0%; height: 100%; background-color: var(--primary-color, #007bff); transition: width 0.3s ease;"></div>
+        </div>
+        <p id="compression-error-text" style="color: red; margin-top: 1rem; display: none;"></p>
+    </div>
+</div>
+
+{% endblock %}
