@@ -14,15 +14,26 @@
             <input type="text" class="form-control" value="{{ platform.name }}" disabled>
         </div>
         {% else %}
-        {# Add mode: dropdown of available predefined platforms #}
+        {# Add mode: dropdown of available predefined platforms or Custom Platform #}
         <div class="form-group">
-            <label for="name" class="form-label">Platform</label>
-            <select id="name" name="name" class="form-control" required>
+            <label for="name_select" class="form-label">Platform</label>
+            <select id="name_select" name="name_select" class="form-control" required>
                 <option value="">Select a platform</option>
                 {% for pname in available_platforms %}
                 <option value="{{ pname }}" data-extensions="{{ predefined_extensions[pname] }}">{{ pname }}</option>
                 {% endfor %}
+                <option value="__custom__">Custom Platform...</option>
             </select>
+        </div>
+
+        <div class="form-group" id="custom_name_group" style="display: none; margin-top: 1rem;">
+            <label for="custom_name" class="form-label">Custom Platform Name</label>
+            <input type="text" id="custom_name" name="custom_name" class="form-control" placeholder="e.g. Nintendo Entertainment System">
+        </div>
+
+        <div class="form-help-box" id="scraping_help_box" style="display: none; margin-top: 0.5rem; margin-bottom: 1.25rem; padding: 0.75rem 1rem; background-color: rgba(0, 123, 255, 0.08); border-left: 4px solid var(--primary-color, #007bff); border-radius: 4px; font-size: 0.9rem; line-height: 1.4;">
+            <strong>💡 Metadata Scraping Recommendation:</strong>
+            For accurate game scraping, please enter the platform name exactly as listed on <a href="https://thegamesdb.net/list_platforms.php" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color, #007bff); text-decoration: underline; font-weight: 600;">TheGamesDB Platforms List</a>.
         </div>
         {% endif %}
         
@@ -64,11 +75,27 @@
 
 {% if not platform %}
 <script>
-    // Auto-fill allowed extensions when a predefined platform is selected
-    document.getElementById('name').addEventListener('change', function() {
-        var selected = this.options[this.selectedIndex];
-        var extensions = selected.getAttribute('data-extensions') || '';
-        document.getElementById('allowed_extensions').value = extensions;
+    document.getElementById('name_select').addEventListener('change', function() {
+        var customGroup = document.getElementById('custom_name_group');
+        var customInput = document.getElementById('custom_name');
+        var scrapingHelpBox = document.getElementById('scraping_help_box');
+        var allowedExtInput = document.getElementById('allowed_extensions');
+
+        if (this.value === '__custom__') {
+            customGroup.style.display = 'block';
+            if (scrapingHelpBox) scrapingHelpBox.style.display = 'block';
+            customInput.required = true;
+            customInput.focus();
+            allowedExtInput.value = '';
+        } else {
+            customGroup.style.display = 'none';
+            if (scrapingHelpBox) scrapingHelpBox.style.display = 'none';
+            customInput.required = false;
+            customInput.value = '';
+            var selected = this.options[this.selectedIndex];
+            var extensions = selected.getAttribute('data-extensions') || '';
+            allowedExtInput.value = extensions;
+        }
     });
 </script>
 {% endif %}

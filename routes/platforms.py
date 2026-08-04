@@ -29,24 +29,26 @@ def add():
     used_names = {p.name for p in Platform.query.all()}
     available_platforms = [name for name in PREDEFINED_PLATFORMS if name not in used_names]
 
-    if not available_platforms:
-        flash('All predefined platforms have already been added.', 'info')
-        return redirect(url_for('platforms.index'))
-
     if request.method == 'POST':
-        name = request.form.get('name')
+        name_select = request.form.get('name_select', '').strip()
+        custom_name = request.form.get('custom_name', '').strip()
+
+        if name_select == '__custom__':
+            name = custom_name
+        else:
+            name = name_select if name_select else request.form.get('name', '').strip()
+
         device_id = request.form.get('device_id')
         allowed_extensions_raw = request.form.get('allowed_extensions', '')
-        
-        # Validate: name must be one of the predefined platforms
-        if name not in PREDEFINED_PLATFORMS:
-            flash('Please select a valid predefined platform.', 'error')
+
+        if not name:
+            flash('Platform name is required.', 'error')
             return render_template('platforms/form.html', title="Add Platform", platform=None,
                                    devices=devices, available_platforms=available_platforms,
                                    predefined_extensions=PREDEFINED_PLATFORMS)
 
-        # Validate: platform must not already exist
-        if name in used_names:
+        # Validate: platform must not already exist (case-insensitive check)
+        if any(p_name.lower() == name.lower() for p_name in used_names):
             flash(f'Platform "{name}" has already been added.', 'error')
             return render_template('platforms/form.html', title="Add Platform", platform=None,
                                    devices=devices, available_platforms=available_platforms,
@@ -66,25 +68,28 @@ def add():
         if scraper not in ['thegamesdb', 'screenscraper']:
             scraper = 'thegamesdb'
             
-        if not name or not device_id:
-            flash('Platform and Device are required.', 'error')
-        else:
-            folder_name_val = request.form.get('folder_name', '').strip()
-            platform = Platform(
-                name=name, device_id=device_id, allowed_extensions=allowed_extensions,
-                folder_name=folder_name_val if folder_name_val else None,
-                scraper=scraper
-            )
-            db.session.add(platform)
-            db.session.commit()
-            
-            # Create folder for platform
-            platform_dir = platform.get_folder_name
-            upload_path = os.path.join(current_app.config['ROM_UPLOAD_PATH'], platform_dir)
-            os.makedirs(upload_path, exist_ok=True)
-            
-            flash('Platform added successfully.', 'success')
-            return redirect(url_for('platforms.index'))
+        if not device_id:
+            flash('Linked device is required.', 'error')
+            return render_template('platforms/form.html', title="Add Platform", platform=None,
+                                   devices=devices, available_platforms=available_platforms,
+                                   predefined_extensions=PREDEFINED_PLATFORMS)
+
+        folder_name_val = request.form.get('folder_name', '').strip()
+        platform = Platform(
+            name=name, device_id=device_id, allowed_extensions=allowed_extensions,
+            folder_name=folder_name_val if folder_name_val else None,
+            scraper=scraper
+        )
+        db.session.add(platform)
+        db.session.commit()
+        
+        # Create folder for platform
+        platform_dir = platform.get_folder_name
+        upload_path = os.path.join(current_app.config['ROM_UPLOAD_PATH'], platform_dir)
+        os.makedirs(upload_path, exist_ok=True)
+        
+        flash('Platform added successfully.', 'success')
+        return redirect(url_for('platforms.index'))
             
     return render_template('platforms/form.html', title="Add Platform", platform=None,
                            devices=devices, available_platforms=available_platforms,
