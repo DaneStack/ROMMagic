@@ -1,6 +1,6 @@
 ![ROMMagic Banner](https://iili.io/CUD7byX.png)
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/b7DdHVJznh)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/b7DdHVJznh) [![Email](https://img.shields.io/badge/Email-%23D14836.svg?style=for-the-badge&logo=gmail&logoColor=white)](mailto:danestack@ik.me)
 
 # ROMMagic
 
