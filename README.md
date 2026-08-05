@@ -158,6 +158,7 @@ rommagic/
 ├── compose.yaml        # Docker Compose configuration file
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variables template
+├── LICENSE             # AGPL-3.0 License file
 ├── models/             # Database models (User, Device, Platform, Rom, Task)
 ├── routes/             # Route Blueprints (auth, main, devices, platforms, roms, saves)
 ├── utils/              # Helper utilities (Scrapers, ES XML generator, Cache)
@@ -184,4 +185,4 @@ curl -X POST http://localhost:5000/migration \
 
 ## License
 
-This project is open-source. Feel free to contribute or adapt it for your home server setup!
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. For more information, please refer to the [LICENSE](LICENSE) file.
