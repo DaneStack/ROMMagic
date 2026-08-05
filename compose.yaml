@@ -1,17 +1,49 @@
 services:
+  db:
+    image: mariadb:latest
+    container_name: rommagic_db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_db_pass
+      - MYSQL_DATABASE=rommagic
+      - MYSQL_USER=rommagic
+      - MYSQL_PASSWORD=default_db_pass
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   rommagic:
-    image: rommagic
+    image: danestack/rommagic:latest
     container_name: rommagic
     user: "1000:1000"
     pull_policy: never
     mem_limit: "4g"
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "5000:5000"
-    env_file:
-      - .env
     environment:
       - USER=app
+      - SECRET_KEY=dev_secret_key
+      - DB_HOST=db
+      - DB_USER=rommagic
+      - DB_PASS=default_db_pass
+      - DB_NAME=rommagic
+      - ROM_UPLOAD_PATH=ROMs
+      - MIGRATION_SECRET_KEY=your_migration_secret_key_here
+      - TIMEZONE=Europe/Budapest
+      # - THEGAMESDB_API_KEY=
+      # - SCREENSCRAPER_DEV_ID=
+      # - SCREENSCRAPER_DEV_PASSWORD=
+      # - SCREENSCRAPER_SOFTNAME=rommagic
+      # - SCREENSCRAPER_USER=
+      # - SCREENSCRAPER_PASSWORD=
     volumes:
       - /home/user/ROMs:/app/ROMs
     healthcheck:
@@ -22,3 +54,6 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+
+volumes:
+  mariadb_data:
