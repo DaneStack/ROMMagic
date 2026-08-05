@@ -1,6 +1,6 @@
 ![ROMMagic Banner](https://iili.io/CUD7byX.png)
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/b7DdHVJznh) [![Email](https://img.shields.io/badge/Email-%23D14836.svg?style=for-the-badge&logo=gmail&logoColor=white)](mailto:danestack@ik.me)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/b7DdHVJznh) [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-%232496ED.svg?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/danestack/rommagic) [![Email](https://img.shields.io/badge/Email-%23D14836.svg?style=for-the-badge&logo=gmail&logoColor=white)](mailto:danestack@ik.me)
 
 # ROMMagic
 
@@ -83,7 +83,7 @@
 
 ---
 
-### Method 2: Docker Setup
+### Method 2: Docker Setup with Build
 
 1. **Build the Docker image**:
    ```bash
@@ -98,6 +98,28 @@
      --env-file .env \
      -v ./ROMs:/app/ROMs \
      rommagic
+   ```
+
+---
+
+### Method 3: Docker Setup with Compose
+
+Docker Compose automatically handles starting both the **MariaDB** database service (`rommagic_db`) and the **ROMMagic** application service (`rommagic`) configured in `compose.yaml`.
+
+1. **Configure `compose.yaml`**:
+   Before launching, edit `compose.yaml` to suit your setup:
+   - **Host ROM Volume**: Update `/home/user/ROMs:/app/ROMs` under `rommagic.volumes` to your local host path where your ROMs directory is located (e.g. `./ROMs:/app/ROMs` or `/mnt/user/ROMs:/app/ROMs`).
+   - **Passwords & Keys**: Change default credentials (`MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `DB_PASS`) and secret keys (`SECRET_KEY`, `MIGRATION_SECRET_KEY`).
+   - **Timezone & Scrapers**: Set your local `TIMEZONE` and optionally uncomment and enter metadata scraper API keys (`THEGAMESDB_API_KEY`, ScreenScraper credentials).
+
+2. **Start all services**:
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Check container status & health**:
+   ```bash
+   docker compose ps
    ```
 
 ---
@@ -133,6 +155,7 @@ rommagic/
 ├── extensions.py       # Flask extensions (SQLAlchemy, LoginManager)
 ├── migration.py        # Database schema migration utilities
 ├── Dockerfile          # Docker setup file
+├── compose.yaml        # Docker Compose configuration file
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variables template
 ├── models/             # Database models (User, Device, Platform, Rom, Task)
