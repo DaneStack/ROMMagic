@@ -92,12 +92,7 @@
 
 2. **Run the container**:
    ```bash
-   docker run -d \
-     --name rommagic \
-     -p 5000:5000 \
-     --env-file .env \
-     -v ./ROMs:/app/ROMs \
-     rommagic
+   docker run -d --name rommagic -p 5000:5000 --env-file .env -v ./ROMs:/app/ROMs rommagic
    ```
 
 ---
