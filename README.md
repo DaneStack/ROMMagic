@@ -181,3 +181,13 @@ curl -X POST http://localhost:5000/migration \
 ## License
 
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. For more information, please refer to the [LICENSE](LICENSE) file.
+
+---
+
+## AI Usage
+
+This project was created with assistance from AI technologies:
+
+- **[Google Antigravity](https://antigravity.google/)**: Served as the primary AI coding assistant, aiding in backend logic implementation with Flask, database schema migrations, Docker & Compose containerization, code refactoring, and documentation.
+- **[Design.com](https://www.design.com)**: Utilized for visual asset creation, branding conceptualization, and banner graphics design.
+
