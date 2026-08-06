@@ -9,6 +9,10 @@
 
 **ROMMagic** is a web-based ROM and save-file management platform built with **Flask**, **SQLAlchemy**, and **MariaDB/MySQL**. It is designed to help retro gaming enthusiasts centralize, manage, organize, and scrape metadata for their ROM collections and save files across multiple gaming devices and emulation platforms.
 
+<p align="center">
+  <img src="https://i.ibb.co/933BhZdd/rommagic-ui.gif" alt="ROMMagic_UI" />
+</p>
+
 ---
 
 ## Features
